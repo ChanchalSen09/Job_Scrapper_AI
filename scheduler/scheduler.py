@@ -9,11 +9,14 @@ from services.processor import JobProcessor
 from utils.logger import setup_logger, get_logger
 logger = get_logger('scheduler')
 
+GLOBAL_SCHEDULER = None
+
 async def run_pipeline() -> None:
     processor = JobProcessor()
     await processor.run()
 
 async def start_scheduler() -> None:
+    global GLOBAL_SCHEDULER
     setup_logger()
     logger.info('=' * 60)
     logger.info('🤖 Job Hunter System Starting')
@@ -38,6 +41,7 @@ async def start_scheduler() -> None:
     logger.info('🚀 Running initial scrape...')
     await run_pipeline()
     scheduler = AsyncIOScheduler()
+    GLOBAL_SCHEDULER = scheduler
     scheduler.add_job(run_pipeline, trigger=IntervalTrigger(hours=config.SCHEDULE_INTERVAL_HOURS), id='job_scraping_pipeline', name='Job Scraping Pipeline', max_instances=1, replace_existing=True)
     scheduler.start()
     next_run = scheduler.get_job('job_scraping_pipeline').next_run_time
