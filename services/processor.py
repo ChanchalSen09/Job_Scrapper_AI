@@ -82,7 +82,7 @@ class JobProcessor:
             url = job.get('url', '')
             if not url:
                 continue
-            if not self.db.job_exists(url):
+            if not self.db.job_exists(url, job.get('title', ''), job.get('company', '')):
                 inserted = self.db.insert_job(job)
                 if inserted:
                     new_jobs.append(job)

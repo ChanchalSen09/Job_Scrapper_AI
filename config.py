@@ -7,6 +7,7 @@ SEARCH_TERMS: list[str] = ['AI Engineer', 'Applied AI Engineer', 'Generative AI 
 TARGET_ROLES: dict[str, list[str]] = {'highest': ['ai engineer', 'applied ai engineer', 'generative ai engineer', 'llm engineer', 'agentic ai engineer', 'ai full stack engineer', 'ai software engineer'], 'secondary': ['backend engineer', 'backend developer', 'python developer', 'python backend engineer', 'software engineer', 'software developer', 'sde', 'sde 1', 'sde1', 'sde-1'], 'additional': ['full stack engineer', 'full stack developer', 'react developer', 'django developer', 'ai application engineer', 'ai solutions engineer', 'ai platform engineer']}
 SKILLS: list[str] = ['python', 'django', 'react', 'typescript', 'javascript', 'postgresql', 'mysql', 'mongodb', 'aws', 'docker', 'rest api', 'restful', 'websocket', 'langchain', 'langgraph', 'rag', 'ollama', 'agentic ai', 'llm', 'generative ai', 'vector search', 'vector database']
 AI_KEYWORDS: list[str] = ['langchain', 'langgraph', 'agentic ai', 'rag', 'ollama', 'llm', 'generative ai', 'vector search', 'vector database', 'large language model', 'prompt engineering', 'ai agent']
+BANNED_COMPANIES: list[str] = ['turing']
 EXPERIENCE_MAX: int = 3
 SCHEDULE_INTERVAL_HOURS: int = 2
 NOTIFICATION_BATCH_SIZE: int = 10

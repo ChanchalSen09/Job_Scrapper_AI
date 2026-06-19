@@ -33,14 +33,25 @@ class Database:
             logger.error('Failed to initialize database: %s', e)
             raise
 
-    def job_exists(self, url: str) -> bool:
+    def job_exists(self, url: str, title: str = "", company: str = "") -> bool:
         try:
             conn = self._get_connection()
             cursor = conn.cursor()
-            cursor.execute('SELECT 1 FROM jobs WHERE url = ? LIMIT 1', (url,))
-            exists = cursor.fetchone() is not None
+            
+            if url:
+                cursor.execute('SELECT 1 FROM jobs WHERE url = ? LIMIT 1', (url,))
+                if cursor.fetchone() is not None:
+                    conn.close()
+                    return True
+            
+            if title and company:
+                cursor.execute('SELECT 1 FROM jobs WHERE LOWER(title) = ? AND LOWER(company) = ? LIMIT 1', (title.lower(), company.lower()))
+                if cursor.fetchone() is not None:
+                    conn.close()
+                    return True
+
             conn.close()
-            return exists
+            return False
         except sqlite3.Error as e:
             logger.error('Error checking job existence: %s', e)
             return False

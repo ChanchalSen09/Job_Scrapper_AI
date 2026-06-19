@@ -13,6 +13,11 @@ class JobFilter:
             self.target_titles.extend([r.lower() for r in tier])
 
     def should_keep(self, job: dict) -> bool:
+        company = job.get('company', '').lower()
+        if company in getattr(config, 'BANNED_COMPANIES', []):
+            logger.debug("Filtering out job from banned company: '%s'", job.get('company'))
+            return False
+
         title = job.get('title', '').lower()
         description = job.get('description', '').lower()
         location = job.get('location', '').lower()

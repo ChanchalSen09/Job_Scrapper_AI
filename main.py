@@ -4,6 +4,9 @@ import os
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from scheduler.scheduler import start_scheduler
 
