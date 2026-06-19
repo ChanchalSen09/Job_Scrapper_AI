@@ -94,12 +94,13 @@ HTML_PAGE = """
                     status.className = 'status success';
                     status.innerText = 'Scraper triggered successfully! Check logs.';
                 } else {
+                    const data = await response.json();
                     status.className = 'status error';
-                    status.innerText = 'Failed to trigger scraper.';
+                    status.innerText = 'Failed: ' + (data.message || 'Unknown error');
                 }
             } catch (err) {
                 status.className = 'status error';
-                status.innerText = 'Error connecting to server.';
+                status.innerText = 'Error connecting to server: ' + String(err);
             } finally {
                 setTimeout(() => {
                     btn.disabled = false;
@@ -124,13 +125,13 @@ class DummyHandler(BaseHTTPRequestHandler):
         if self.path == '/trigger':
             try:
                 import scheduler.scheduler as sch
-                from apscheduler.triggers.date import DateTrigger
-                from datetime import datetime
                 if getattr(sch, 'GLOBAL_SCHEDULER', None):
+                    import time
+                    # We use trigger='date' without run_date to run immediately
                     sch.GLOBAL_SCHEDULER.add_job(
                         sch.run_pipeline, 
-                        trigger=DateTrigger(run_date=datetime.now()), 
-                        id=f'manual_run_{int(datetime.now().timestamp())}'
+                        trigger='date', 
+                        id=f'manual_run_{int(time.time())}'
                     )
                     self.send_response(200)
                     self.send_header("Content-type", "application/json")
@@ -142,10 +143,13 @@ class DummyHandler(BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(b'{"status": "error", "message": "Scheduler not initialized"}')
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 self.send_response(500)
                 self.send_header("Content-type", "application/json")
                 self.end_headers()
-                self.wfile.write(f'{{"status": "error", "message": "{str(e)}" }}'.encode('utf-8'))
+                err_msg = str(e).replace('"', "'")
+                self.wfile.write(f'{{"status": "error", "message": "{err_msg}" }}'.encode('utf-8'))
         else:
             self.send_response(404)
             self.end_headers()
