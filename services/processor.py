@@ -17,7 +17,7 @@ import asyncio
 import json
 from datetime import datetime
 import config
-from database.sqlite import Database
+from database.postgres import Database
 from scrapers.linkedin import LinkedInScraper
 from scrapers.wellfound import WellfoundScraper
 from scrapers.indeed import IndeedScraper

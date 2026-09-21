@@ -8,6 +8,7 @@ load_dotenv()
 # ─────────────────────────────────────────────────────────────────────────────
 BOT_TOKEN: str = os.getenv('BOT_TOKEN', '')
 CHAT_ID: str = os.getenv('CHAT_ID', '')
+DATABASE_URL: str = os.getenv('DATABASE_URL', '')
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SEARCH TERMS — AI-focused only. Secondary terms filtered heavily by scorer.
