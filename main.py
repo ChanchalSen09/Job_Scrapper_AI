@@ -162,10 +162,9 @@ def run_dummy_server():
 def main():
     print('\n    +==================================================+\n    |         Job Hunter System v1.0                    |\n    |         Resume-Driven Job Scraper                 |\n    |                                                   |\n    |  Sources: Wellfound | Indeed | Naukri | Cutshort  |\n    |  Notifications: Telegram                          |\n    |                                                   |\n    |  Press Ctrl+C to stop                             |\n    +==================================================+\n    ')
     
-    # Start the dummy web server in a background thread if PORT is set (like on Render)
-    if os.environ.get("RENDER") or os.environ.get("PORT"):
-        threading.Thread(target=run_dummy_server, daemon=True).start()
-        print("Started dummy web server for Render Web Service compatibility.")
+    # Start the web UI server in a background thread
+    threading.Thread(target=run_dummy_server, daemon=True).start()
+    print("Started local web dashboard at http://localhost:8080")
 
     try:
         asyncio.run(start_scheduler())
