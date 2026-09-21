@@ -1,4 +1,4 @@
-# 🔍 Job Hunter System
+# 🔍 Job Hunter AI
 
 A **resume-driven job scraping system** that automatically finds relevant jobs from multiple Indian job portals, scores them against your profile, removes duplicates, and sends notifications via Telegram.
 
@@ -6,59 +6,37 @@ Built for personal use to **maximize interview opportunities within 30 days**.
 
 ## ✨ Features
 
-- **Multi-source scraping** — Wellfound, Indeed India, Naukri, Cutshort
+- **Multi-source scraping** — LinkedIn, Wellfound, Instahyre
 - **Rule-based scoring** — Jobs ranked by relevance to your profile (AI/ML, Python, Django, React)
 - **Smart filtering** — Relaxed filters to maximize opportunities (experience ≤ 3 years)
-- **Deduplication** — SQLite-backed URL tracking ensures you never see the same job twice
+- **Deduplication** — PostgreSQL-backed URL tracking ensures you never see the same job twice
 - **Telegram notifications** — Batched, formatted messages sent directly to your phone
-- **Scheduled execution** — Runs every 2 hours automatically via APScheduler
-- **Fault-tolerant** — One scraper failing never stops the others
+- **Cloud Ready** — Dockerized and configured for automatic deployment on Render with Aiven Postgres.
 
 ## 🏗️ Architecture
 
 ```
-main.py → scheduler → processor → scrapers (4 sources)
+main.py → scheduler → processor → scrapers (LinkedIn, Wellfound, Instahyre)
                                  → filter (experience check)
                                  → scorer (rule-based ranking)
-                                 → database (SQLite dedup)
+                                 → database (PostgreSQL dedup)
                                  → notifier (Telegram)
 ```
 
-### Scoring System
+## 🚀 Deployment (Render)
 
-| Condition                                         | Points             |
-| ------------------------------------------------- | ------------------ |
-| Title matches AI/ML roles                         | +100               |
-| Title matches backend/SDE roles                   | +70                |
-| Title matches fullstack roles                     | +50                |
-| AI keywords in description (langchain, rag, etc.) | +30 each (max 120) |
-| Python in description                             | +20                |
-| Django in description                             | +20                |
-| React / TypeScript                                | +15 each           |
-| AWS / Docker                                      | +10 each           |
-| Database skills                                   | +10 each           |
-| Remote location                                   | +15                |
-| India-based city                                  | +5                 |
+1. Connect this repository to a **Render Web Service**.
+2. Select **Docker** as the environment.
+3. Add your Environment Variables:
+   - `BOT_TOKEN`: Your Telegram Bot Token
+   - `CHAT_ID`: Your Telegram Group Chat ID
+   - `DATABASE_URL`: Your Aiven PostgreSQL connection string
 
-### Filtering Rules
+## ⚖️ License & Copyright
 
-Jobs are **kept** if ANY of:
+**Copyright (c) 2026. All Rights Reserved.**
 
-- Experience requirement ≤ 3 years
-- No experience mentioned
-- Title matches target role
-- ≥ 2 matching skills found
+This code is provided for educational and review purposes only. You may not copy, modify, distribute, sell, or run this code for your own commercial or personal use without explicit permission from the author.
 
-Jobs are **rejected** only if experience > 3 years AND no matching role/skills.
-
-### Scraper getting blocked?
-
-- Increase `REQUEST_DELAY` in `config.py`
-- Sites may update their HTML — check `logs/app.log` for selector errors
-- The system will continue running even if one scraper fails
-
-### No jobs found?
-
-- Check `logs/app.log` for detailed scraper output
-- Verify search terms in `config.py`
-- Try running a single scraper manually for debugging
+---
+*Note: Indeed, Naukri, and Cutshort scrapers are currently disabled by default due to strict Cloudflare anti-bot protections (403 Forbidden).*
