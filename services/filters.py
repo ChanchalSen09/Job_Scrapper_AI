@@ -66,21 +66,62 @@ class JobFilter:
         return True, ''
 
     def _passes_title_precheck(self, title: str) -> bool:
-        """Quick pre-check: does the title relate to any engineering/tech role?"""
-        # Accept if it matches any known target role
+        """Quick pre-check: does the title relate to the target engineering roles?"""
+        title = title.lower().strip()
+
+        # Exact / configured target roles
         for role in self.target_titles:
-            if role in title:
+            role = role.lower().strip()
+
+            # Prevent short terms like "ai" from matching words such as "email"
+            if len(role) <= 3:
+                if re.search(rf'\b{re.escape(role)}\b', title):
+                    return True
+            elif role in title:
                 return True
-        # Accept generic tech role keywords
+
+        # Additional broad engineering keywords
         broad_kws = [
-            'ai', 'ml', 'machine learning', 'llm', 'genai',
-            'python', 'backend', 'full stack', 'fullstack', 'full-stack',
-            'engineer', 'developer', 'sde', 'software',
-            'rag', 'agentic', 'generative',
+            "software engineer",
+            "software developer",
+            "frontend",
+            "front-end",
+            "backend",
+            "back-end",
+            "full stack",
+            "fullstack",
+            "full-stack",
+            "web developer",
+            "web engineer",
+            "react",
+            "next.js",
+            "node.js",
+            "javascript",
+            "typescript",
+            "mern",
+            "api",
+            "application engineer",
+            "application developer",
+            "platform engineer",
+            "product engineer",
+            "ai engineer",
+            "ai developer",
+            "genai",
+            "generative ai",
+            "llm",
+            "machine learning",
+            "agentic",
+            "rag",
+            "applied ai",
+            "application support",
+            "production support",
+            "software support",
         ]
+
         for kw in broad_kws:
             if kw in title:
                 return True
+
         return False
 
     def _passes_location_check(self, location: str, full_text: str) -> bool:

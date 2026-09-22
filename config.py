@@ -14,111 +14,89 @@ DATABASE_URL: str = os.getenv('DATABASE_URL', '')
 # SEARCH TERMS — AI-focused only. Secondary terms filtered heavily by scorer.
 # ─────────────────────────────────────────────────────────────────────────────
 SEARCH_TERMS: list[str] = [
-    # Primary AI roles
+    'Software Engineer',
+    'Frontend Developer',
+    'Backend Engineer',
+    'Full Stack Developer',
+    'React Developer',
+    'Node.js Developer',
+    'Application Support',
     'AI Engineer',
-    'AI Software Engineer',
-    'AI Application Engineer',
-    'AI Backend Engineer',
-    'AI Full Stack Engineer',
-    'Full Stack AI Engineer',
-    'Generative AI Engineer',
-    'GenAI Engineer',
-    'Applied AI Engineer',
-    'LLM Engineer',
-    'LLM Application Engineer',
-    'RAG Engineer',
-    'Agentic AI Engineer',
-    'AI Platform Engineer',
-    'AI Solutions Engineer',
-    # Python + AI combos
-    'Python AI Engineer',
-    'Python GenAI Engineer',
-    'Python LLM Engineer',
-    'Python RAG Engineer',
-    'AI Backend Python',
-    'GenAI FastAPI',
-    'LLM FastAPI',
-    # Secondary (filtered heavily by AI relevance scorer)
-    'Python Backend Engineer',
-    'Backend Engineer Python',
-    'SDE 1 Python',
-    'Full Stack Engineer Python',
+    'Python Developer',
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # WELLFOUND-SPECIFIC SEARCH TERMS
-# Wellfound hosts early-stage AI startups. They often use simpler, less formal
-# job titles. These terms are used only by the WellfoundScraper.
 # ─────────────────────────────────────────────────────────────────────────────
 WELLFOUND_SEARCH_TERMS: list[str] = [
-    # Core AI roles
-    'ai-engineer',
-    'generative-ai-engineer',
-    'llm-engineer',
-    'rag-engineer',
-    'machine-learning-engineer',
-    'ai-backend-engineer',
-    'full-stack-ai-engineer',
-    # Startup-flavored titles
-    'founding-ai-engineer',
-    'founding-engineer',
-    'python-engineer',
-    'backend-engineer',
     'software-engineer',
+    'frontend-engineer',
+    'backend-engineer',
+    'full-stack-engineer',
+    'react-developer',
+    'node-js-developer',
+    'ai-engineer',
+    'application-support',
+    'python-developer',
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TARGET ROLES — Primary (scored as AI roles)
-# Values: raw title score points
+# TARGET ROLES
 # ─────────────────────────────────────────────────────────────────────────────
-PRIMARY_AI_ROLES: dict[str, int] = {
-    'ai engineer': 120,
-    'full stack ai engineer': 120,
-    'ai full stack engineer': 120,
-    'generative ai engineer': 120,
-    'genai engineer': 120,
-    'applied ai engineer': 115,
-    'ai software engineer': 110,
-    'ai application engineer': 110,
-    'ai backend engineer': 110,
-    'llm engineer': 110,
-    'llm application engineer': 110,
-    'agentic ai engineer': 110,
-    'rag engineer': 105,
-    'ai platform engineer': 105,
-    'ai solutions engineer': 100,
-    'machine learning engineer': 80,  # Only high if strongly LLM/GenAI focused
+TARGET_ROLES = {
+    "primary": [
+        "Software Engineer", "Software Developer", "Software Development Engineer",
+        "SDE", "Associate Software Engineer", "Junior Software Engineer",
+        "Junior Software Developer", "Software Engineer I", "Software Developer I",
+        "Graduate Software Engineer", "Graduate Software Developer",
+        
+        "Frontend Engineer", "Frontend Developer", "Front-End Engineer",
+        "Front-End Developer", "React Developer", "React.js Developer",
+        "React Engineer", "Next.js Developer", "Next.js Engineer",
+        "UI Engineer", "UI Developer", "Web Developer", "Web Engineer",
+        "Web Application Developer", "Web Application Engineer",
+        "JavaScript Developer", "TypeScript Developer",
+
+        "Full Stack Developer", "Full Stack Engineer", "Fullstack Developer",
+        "Fullstack Engineer", "Full-Stack Developer", "Full-Stack Engineer",
+        "MERN Developer", "MERN Stack Developer", "MERN Engineer", "MERN Stack Engineer",
+
+        "Backend Developer", "Backend Engineer", "Back-End Developer",
+        "Back-End Engineer", "Node.js Developer", "Node.js Engineer",
+        "Node Developer", "API Developer", "API Engineer", "REST API Developer",
+        "Backend Software Engineer",
+
+        "Product Engineer", "Product Developer", "Platform Engineer",
+        "Application Engineer", "Application Developer", "Software Application Engineer",
+    ],
+    "ai": [
+        "AI Engineer", "AI Software Engineer", "AI Developer",
+        "AI Application Engineer", "AI Application Developer",
+        "AI Integration Engineer", "AI Integration Developer",
+        "Generative AI Engineer", "Generative AI Developer",
+        "GenAI Engineer", "GenAI Developer", "LLM Engineer",
+        "LLM Developer", "AI Software Developer", "AI Engineer - Software",
+    ],
+    "support": [
+        "Application Support Engineer", "Application Support Analyst",
+        "Application Support Developer", "Software Support Engineer",
+        "Software Support Analyst", "Production Support Engineer",
+        "Production Support Analyst", "Technical Support Engineer",
+        "Technical Application Support Engineer",
+    ],
+    "secondary": [
+        "Cloud Engineer", "AWS Engineer", "DevOps Engineer",
+        "DevOps Developer", "Cloud Software Engineer",
+        "Database Developer", "Database Engineer", "MongoDB Developer",
+        "Node.js Backend Developer", "API Integration Engineer",
+    ],
 }
 
-# Secondary roles — require AI relevance to score well
-SECONDARY_ROLES: dict[str, int] = {
-    'python backend engineer': 75,
-    'backend engineer': 70,
-    'backend developer': 70,
-    'software engineer': 60,
-    'software developer': 55,
-    'sde 1': 60,
-    'sde1': 60,
-    'sde-1': 60,
-    'sde': 55,
-    'full stack engineer': 55,
-    'full stack developer': 50,
-}
-
-# Generic roles — low base score, need strong AI content to be relevant
-GENERIC_ROLES: dict[str, int] = {
-    'react developer': 45,
-    'django developer': 45,
-    'python developer': 45,
-    'frontend developer': 45,
-    'frontend engineer': 45,
-}
-
-# Backward-compat alias used in older code paths
-TARGET_ROLES: dict[str, list[str]] = {
-    'highest': list(PRIMARY_AI_ROLES.keys()),
-    'secondary': list(SECONDARY_ROLES.keys()),
-    'additional': list(GENERIC_ROLES.keys()),
+TARGET_ROLE_SCORES = {
+    'ai': 110,
+    'primary': 90,
+    'secondary': 70,
+    'support': 60
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -348,11 +326,11 @@ EXPERIENCE_MAX: int = 3               # Backward compat alias
 # SCORING WEIGHTS — Must sum to 1.0
 # ─────────────────────────────────────────────────────────────────────────────
 SCORING_WEIGHTS: dict[str, float] = {
-    'role': 0.25,
-    'ai': 0.25,
-    'skill': 0.20,
-    'responsibility': 0.15,
-    'experience': 0.10,
+    'role': 0.50,          # Boosted so a matching role guarantees a pass
+    'experience': 0.15,    # Boosted to reward matching experience
+    'ai': 0.10,
+    'skill': 0.10,
+    'responsibility': 0.10,
     'location': 0.05,
 }
 

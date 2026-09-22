@@ -126,9 +126,13 @@ class JobScorer:
 
     def __init__(self):
         # Pre-compile keyword lists for speed
-        self._primary_roles = {k.lower(): v for k, v in config.PRIMARY_AI_ROLES.items()}
-        self._secondary_roles = {k.lower(): v for k, v in config.SECONDARY_ROLES.items()}
-        self._generic_roles = {k.lower(): v for k, v in config.GENERIC_ROLES.items()}
+        self._all_roles = {}
+        for category, roles in config.TARGET_ROLES.items():
+            pts = config.TARGET_ROLE_SCORES.get(category, 60)
+            for role in roles:
+                self._all_roles[role.lower()] = pts
+        # sort by points descending
+        self._all_roles = dict(sorted(self._all_roles.items(), key=lambda item: item[1], reverse=True))
         self._ai_keywords = {k.lower(): v for k, v in config.AI_KEYWORDS.items()}
         self._backend_skills = {k.lower(): v for k, v in config.BACKEND_SKILLS.items()}
         self._frontend_skills = {k.lower(): v for k, v in config.FRONTEND_SKILLS.items()}
@@ -176,8 +180,6 @@ class JobScorer:
         exp_norm = max(0, experience_raw)  # already 0–100 range from _score_experience
         loc_norm = self._norm(location_raw, 30)
 
-        is_secondary = matched_role in self._secondary_roles or matched_role in self._generic_roles
-        is_generic = matched_role in self._generic_roles
         # Note: AI penalties for generic/secondary roles have been removed per user request
         # to allow all matching titles to pass regardless of AI keyword density.
 
@@ -240,13 +242,7 @@ class JobScorer:
         Returns (raw_points, matched_role_name, role_category).
         Raw scale: 0–120.
         """
-        for role, pts in self._primary_roles.items():
-            if role in title:
-                return pts, role, _classify_role(title)
-        for role, pts in self._secondary_roles.items():
-            if role in title:
-                return pts, role, _classify_role(title)
-        for role, pts in self._generic_roles.items():
+        for role, pts in self._all_roles.items():
             if role in title:
                 return pts, role, _classify_role(title)
         # Fallback: AI keyword in title

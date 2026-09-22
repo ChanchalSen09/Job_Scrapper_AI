@@ -115,15 +115,14 @@ class TelegramNotifier:
         band = job.get('match_band', 'GOOD')
         score = job.get('final_score', job.get('score', 0))
         emoji = BAND_EMOJI.get(band, '✨')
-        band_label = BAND_LABEL.get(band, band)
+        band_label = BAND_LABEL.get(band, band).capitalize()
 
-        title = job.get('title', 'Unknown')
-        company = job.get('company', 'Unknown')
+        # Escape markdown characters just in case
+        title = job.get('title', 'Unknown').replace('*', '').replace('_', '')
+        company = job.get('company', 'Unknown').replace('*', '').replace('_', '')
         location = job.get('location', 'N/A') or 'N/A'
         source = job.get('source', 'unknown').capitalize()
         url = job.get('url', '')
-        role_cat = job.get('role_category', '')
-        work_type = job.get('work_type', '')
 
         # Experience display
         exp_req = job.get('experience_requirement', {})
@@ -136,6 +135,7 @@ class TelegramNotifier:
 
         # Freshness
         freshness = _format_freshness(job.get('posted_date', ''), job.get('freshness_score'))
+        posted_str = f" (Posted {freshness.lower()})" if freshness else ""
 
         # Matched skills
         matched_skills = job.get('matched_skills', [])
@@ -146,40 +146,24 @@ class TelegramNotifier:
                 matched_skills = []
         skills_block = _format_skills(matched_skills)
 
-        # Match reason
-        match_reason = job.get('match_reason', '')
-
         lines = [
-            f'{emoji} {band_label} — {score}/100',
+            f'{emoji} **{title}**',
+            f'*{company}* • 📍 {location}',
             '',
-            f'🏷️  {title}',
-            f'🏢 {company}',
-            f'📍 {location}',
+            f'**Match Score:** {score}/100 ({band_label})',
         ]
+        
         if exp_display:
-            lines.append(f'📅 Experience: {exp_display}')
-        lines.append(f'🔌 Source: {source}')
-        if work_type and work_type != 'unknown':
-            lines.append(f'🌐 Work type: {work_type.capitalize()}')
-
+            lines.append(f'**Experience:** {exp_display}')
+            
         if skills_block:
-            lines.append('')
-            lines.append('Why it matches:')
-            lines.append(skills_block)
-
+            lines.append(f'**Stack:** {skills_block}')
+            
+        lines.append(f'**Source:** {source}{posted_str}')
         lines.append('')
-        role_info = f'Role: {role_cat}' if role_cat else ''
-        freshness_info = f'Freshness: {freshness}' if freshness else ''
-        info_parts = [p for p in [role_info, freshness_info] if p]
-        if info_parts:
-            lines.append(' | '.join(info_parts))
-
-        lines.append('')
-        lines.append(f'🔗 Apply:\n{url}')
-        lines.append('─' * 28)
+        lines.append(f'🔗 [Apply Here]({url})')
 
         message = '\n'.join(lines)
-        # Telegram max message length = 4096
         if len(message) > 4090:
             message = message[:4087] + '...'
         return message
@@ -203,6 +187,7 @@ class TelegramNotifier:
                     json={
                         'chat_id': self.chat_id,
                         'text': text,
+                        'parse_mode': 'Markdown',
                         'disable_web_page_preview': True,
                     },
                     timeout=30,
@@ -305,8 +290,8 @@ def _format_freshness(posted_date: str, freshness_days) -> str:
 
 
 def _format_skills(skills: list) -> str:
-    """Format up to 8 matched skills as checkmarks."""
+    """Format up to 8 matched skills as dots."""
     if not skills:
         return ''
     top = skills[:8]
-    return '  '.join(f'✅ {s.title()}' for s in top)
+    return ' • '.join(s.title() for s in top)
