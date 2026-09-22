@@ -16,7 +16,7 @@ from typing import Optional
 # ─────────────────────────────────────────────────────────────────────────────
 
 CREATE_JOBS_TABLE = """
-CREATE TABLE IF NOT EXISTS jobs (
+CREATE TABLE IF NOT EXISTS scraped_jobs (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     company TEXT NOT NULL,
@@ -48,14 +48,14 @@ CREATE TABLE IF NOT EXISTS jobs (
 
 # Indexes
 CREATE_INDEXES = [
-    'CREATE INDEX IF NOT EXISTS idx_jobs_url ON jobs(url);',
-    'CREATE INDEX IF NOT EXISTS idx_jobs_final_score ON jobs(final_score DESC);',
-    'CREATE INDEX IF NOT EXISTS idx_jobs_score ON jobs(score DESC);',
-    'CREATE INDEX IF NOT EXISTS idx_jobs_notified ON jobs(notified);',
-    'CREATE INDEX IF NOT EXISTS idx_jobs_source ON jobs(source);',
-    'CREATE INDEX IF NOT EXISTS idx_jobs_created_at ON jobs(created_at);',
-    'CREATE INDEX IF NOT EXISTS idx_jobs_role_category ON jobs(role_category);',
-    'CREATE INDEX IF NOT EXISTS idx_jobs_match_band ON jobs(final_score, notified);',
+    'CREATE INDEX IF NOT EXISTS idx_scraped_jobs_url ON scraped_jobs(url);',
+    'CREATE INDEX IF NOT EXISTS idx_scraped_jobs_final_score ON scraped_jobs(final_score DESC);',
+    'CREATE INDEX IF NOT EXISTS idx_scraped_jobs_score ON scraped_jobs(score DESC);',
+    'CREATE INDEX IF NOT EXISTS idx_scraped_jobs_notified ON scraped_jobs(notified);',
+    'CREATE INDEX IF NOT EXISTS idx_scraped_jobs_source ON scraped_jobs(source);',
+    'CREATE INDEX IF NOT EXISTS idx_scraped_jobs_created_at ON scraped_jobs(created_at);',
+    'CREATE INDEX IF NOT EXISTS idx_scraped_jobs_role_category ON scraped_jobs(role_category);',
+    'CREATE INDEX IF NOT EXISTS idx_scraped_jobs_match_band ON scraped_jobs(final_score, notified);',
 ]
 
 # Columns added in v2 — used for safe ALTER TABLE migration

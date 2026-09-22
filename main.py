@@ -17,95 +17,197 @@ HTML_PAGE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Job Hunter Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #0b0f19;
+            --glass-bg: rgba(20, 27, 45, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.12), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.12), transparent 25%);
+            color: var(--text-main);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
+            overflow: hidden;
         }
-        .container {
-            background: #1e293b;
-            padding: 3rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        .dashboard-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            padding: 3.5rem 3rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
             text-align: center;
-            max-width: 400px;
+            max-width: 420px;
+            width: 100%;
+            position: relative;
         }
-        h1 { margin-top: 0; font-size: 1.5rem; color: #38bdf8; }
-        p { color: #94a3b8; margin-bottom: 2rem; line-height: 1.5; }
-        .btn {
-            background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: 10%; right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.8), transparent);
+            opacity: 0.5;
+        }
+        h1 { 
+            margin: 0 0 0.5rem 0; 
+            font-size: 2rem; 
+            font-weight: 800;
+            background: linear-gradient(135deg, #f8fafc, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        p { 
+            color: var(--text-muted); 
+            margin-bottom: 2.5rem; 
+            line-height: 1.6; 
+            font-size: 1.05rem;
+            font-weight: 300;
+        }
+        .btn-trigger {
+            background: linear-gradient(135deg, #0ea5e9, #6366f1);
             color: white;
             border: none;
-            padding: 1rem 2rem;
+            padding: 1rem 2.5rem;
             font-size: 1.1rem;
+            font-family: 'Outfit', sans-serif;
             font-weight: 600;
-            border-radius: 9999px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
         }
-        .btn:hover {
+        .btn-trigger::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .btn-trigger:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+            box-shadow: 0 10px 20px var(--accent-glow);
         }
-        .btn:active {
-            transform: translateY(0);
+        .btn-trigger:hover::after {
+            opacity: 1;
         }
-        .status { margin-top: 1.5rem; font-size: 0.9rem; min-height: 1.5rem; }
+        .btn-trigger:active {
+            transform: translateY(1px);
+            box-shadow: 0 5px 10px rgba(56, 189, 248, 0.2);
+        }
+        .btn-trigger:disabled {
+            background: #334155;
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
+            color: #94a3b8;
+        }
+        .status-container {
+            margin-top: 2rem;
+            min-height: 24px;
+            font-size: 0.95rem;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            display: none;
+        }
+        .status-dot.pulsing {
+            display: block;
+            animation: pulse 1.5s infinite;
+        }
         .success { color: #34d399; }
         .error { color: #f87171; }
+        .neutral { color: var(--text-muted); }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="dashboard-card">
         <h1>Job Hunter System</h1>
-        <p>Your automated resume-driven job scraper is running in the background.</p>
-        <button class="btn" id="triggerBtn" onclick="triggerScraper()">
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        <p>Automated resume-driven scraper is monitoring in the background.</p>
+        
+        <button class="btn-trigger" id="triggerBtn" onclick="triggerScraper()">
+            <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             Trigger Scraper Now
         </button>
-        <div class="status" id="statusMessage"></div>
+        
+        <div class="status-container">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText" class="neutral">System idle</span>
+        </div>
     </div>
 
     <script>
         async function triggerScraper() {
             const btn = document.getElementById('triggerBtn');
-            const status = document.getElementById('statusMessage');
+            const statusText = document.getElementById('statusText');
+            const statusDot = document.getElementById('statusDot');
             
             btn.disabled = true;
-            btn.style.opacity = '0.7';
-            status.className = 'status';
-            status.innerText = 'Triggering...';
+            statusDot.className = 'status-dot pulsing';
+            statusText.className = 'neutral';
+            statusText.innerText = 'Triggering background pipeline...';
 
             try {
                 const response = await fetch('/trigger', { method: 'POST' });
                 if (response.ok) {
-                    status.className = 'status success';
-                    status.innerText = 'Scraper triggered successfully! Check logs.';
+                    statusDot.style.display = 'none';
+                    statusText.className = 'success';
+                    statusText.innerText = 'Pipeline triggered successfully!';
                 } else {
                     const data = await response.json();
-                    status.className = 'status error';
-                    status.innerText = 'Failed: ' + (data.message || 'Unknown error');
+                    statusDot.style.display = 'none';
+                    statusText.className = 'error';
+                    statusText.innerText = 'Failed: ' + (data.message || 'Unknown error');
                 }
             } catch (err) {
-                status.className = 'status error';
-                status.innerText = 'Error connecting to server: ' + String(err);
+                statusDot.style.display = 'none';
+                statusText.className = 'error';
+                statusText.innerText = 'Connection error. Check logs.';
             } finally {
                 setTimeout(() => {
                     btn.disabled = false;
-                    btn.style.opacity = '1';
-                }, 2000);
+                    statusText.innerText = 'System idle';
+                    statusText.className = 'neutral';
+                    statusDot.style.display = 'none';
+                }, 4000);
             }
         }
     </script>

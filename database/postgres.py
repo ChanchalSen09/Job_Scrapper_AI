@@ -43,11 +43,14 @@ class Database:
             conn = self._get_connection()
             cursor = self._get_cursor(conn)
             cursor.execute(CREATE_JOBS_TABLE)
+            conn.commit()
+            
+            # Run v2 migration (safe no-op if columns already exist) BEFORE creating indexes
+            self._migrate_schema(conn)
+            
             for index_sql in CREATE_INDEXES:
                 cursor.execute(index_sql)
             conn.commit()
-            # Run v2 migration (safe no-op if columns already exist)
-            self._migrate_schema(conn)
             conn.close()
             logger.info('Database initialized on PostgreSQL')
         except psycopg2.Error as e:
@@ -62,14 +65,14 @@ class Database:
         """
         cursor = self._get_cursor(conn)
         # Get existing columns
-        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name='jobs'")
+        cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name='scraped_jobs'")
         existing_cols = {row['column_name'] for row in cursor.fetchall()}
 
         added = []
         for col_name, col_def in V2_COLUMNS:
             if col_name not in existing_cols:
                 try:
-                    cursor.execute(f'ALTER TABLE jobs ADD COLUMN IF NOT EXISTS {col_name} {col_def}')
+                    cursor.execute(f'ALTER TABLE scraped_jobs ADD COLUMN IF NOT EXISTS {col_name} {col_def}')
                     added.append(col_name)
                 except psycopg2.errors.DuplicateColumn as e:
                     # Column may already exist in a concurrent run
@@ -95,7 +98,7 @@ class Database:
             cursor = self._get_cursor(conn)
 
             if url:
-                cursor.execute('SELECT 1 FROM jobs WHERE url = %s LIMIT 1', (url,))
+                cursor.execute('SELECT 1 FROM scraped_jobs WHERE url = %s LIMIT 1', (url,))
                 if cursor.fetchone() is not None:
                     conn.close()
                     return True
@@ -103,7 +106,7 @@ class Database:
             if title and company:
                 norm_title = normalize_title(title)
                 cursor.execute(
-                    'SELECT 1 FROM jobs WHERE LOWER(company) = %s AND LOWER(title) = %s LIMIT 1',
+                    'SELECT 1 FROM scraped_jobs WHERE LOWER(company) = %s AND LOWER(title) = %s LIMIT 1',
                     (company.lower(), norm_title),
                 )
                 if cursor.fetchone() is not None:
@@ -125,7 +128,7 @@ class Database:
             cursor = self._get_cursor(conn)
             cursor.execute(
                 '''
-                INSERT INTO jobs (
+                INSERT INTO scraped_jobs (
                     title, company, location, url, source, description,
                     score, notified,
                     final_score, role_category, ai_score, backend_score,
@@ -194,7 +197,7 @@ class Database:
             cursor = self._get_cursor(conn)
             cursor.execute(
                 '''
-                SELECT * FROM jobs
+                SELECT * FROM scraped_jobs
                 WHERE notified = 0
                 ORDER BY final_score DESC, created_at DESC
                 '''
@@ -213,7 +216,7 @@ class Database:
             conn = self._get_connection()
             cursor = self._get_cursor(conn)
             placeholders = ','.join(['%s' for _ in job_ids])
-            cursor.execute(f'UPDATE jobs SET notified = 1 WHERE id IN ({placeholders})', job_ids)
+            cursor.execute(f'UPDATE scraped_jobs SET notified = 1 WHERE id IN ({placeholders})', job_ids)
             conn.commit()
             conn.close()
             logger.info('Marked %d jobs as notified', len(job_ids))
@@ -227,7 +230,7 @@ class Database:
             conn = self._get_connection()
             cursor = self._get_cursor(conn)
             cursor.execute(
-                "DELETE FROM jobs WHERE created_at <= NOW() - INTERVAL '%s days'",
+                "DELETE FROM scraped_jobs WHERE created_at <= NOW() - INTERVAL '%s days'",
                 (retention_days,),
             )
             deleted_count = cursor.rowcount
@@ -246,27 +249,27 @@ class Database:
             conn = self._get_connection()
             cursor = self._get_cursor(conn)
 
-            cursor.execute('SELECT COUNT(*) FROM jobs')
+            cursor.execute('SELECT COUNT(*) FROM scraped_jobs')
             total = cursor.fetchone()['count']
 
             today = datetime.now().strftime('%Y-%m-%d')
-            cursor.execute('SELECT COUNT(*) FROM jobs WHERE DATE(created_at) = %s', (today,))
+            cursor.execute('SELECT COUNT(*) FROM scraped_jobs WHERE DATE(created_at) = %s', (today,))
             today_count = cursor.fetchone()['count']
 
-            cursor.execute('SELECT source, COUNT(*) as count FROM jobs GROUP BY source ORDER BY count DESC')
+            cursor.execute('SELECT source, COUNT(*) as count FROM scraped_jobs GROUP BY source ORDER BY count DESC')
             by_source = {row['source']: row['count'] for row in cursor.fetchall()}
 
-            cursor.execute('SELECT COUNT(*) FROM jobs WHERE notified = 0')
+            cursor.execute('SELECT COUNT(*) FROM scraped_jobs WHERE notified = 0')
             unnotified = cursor.fetchone()['count']
 
-            cursor.execute('SELECT AVG(final_score) FROM jobs WHERE final_score > 0')
+            cursor.execute('SELECT AVG(final_score) FROM scraped_jobs WHERE final_score > 0')
             avg_raw = cursor.fetchone()['avg']
             avg_score = round(float(avg_raw), 1) if avg_raw else 0.0
 
             cursor.execute(
                 '''
                 SELECT role_category, COUNT(*) as count
-                FROM jobs
+                FROM scraped_jobs
                 WHERE role_category != '' AND DATE(created_at) = %s
                 GROUP BY role_category
                 ORDER BY count DESC
@@ -284,7 +287,7 @@ class Database:
                     SUM(CASE WHEN final_score >= 70 AND final_score < 80 THEN 1 ELSE 0 END) as good,
                     SUM(CASE WHEN final_score >= 60 AND final_score < 70 THEN 1 ELSE 0 END) as borderline,
                     SUM(CASE WHEN final_score < 60 THEN 1 ELSE 0 END) as skip
-                FROM jobs WHERE DATE(created_at) = %s
+                FROM scraped_jobs WHERE DATE(created_at) = %s
                 ''',
                 (today,),
             )

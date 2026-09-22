@@ -7,8 +7,8 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install any extra system dependencies (Playwright image has almost everything)
-RUN apt-get update && apt-get install -y sqlite3 && rm -rf /var/lib/apt/lists/*
+# Install any extra system dependencies if needed (Playwright image has almost everything)
+RUN apt-get update && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt .
