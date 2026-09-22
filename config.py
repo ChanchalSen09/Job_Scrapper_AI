@@ -93,10 +93,10 @@ TARGET_ROLES = {
 }
 
 TARGET_ROLE_SCORES = {
-    'ai': 110,
-    'primary': 90,
-    'secondary': 70,
-    'support': 60
+    'ai': 120,
+    'primary': 120,
+    'secondary': 120,
+    'support': 120
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -341,7 +341,7 @@ MATCH_BANDS: dict[str, int] = {
     'EXCELLENT': 90,
     'STRONG': 80,
     'GOOD': 55,
-    'BORDERLINE': 40,
+    'BORDERLINE': 0,
     # Below 40 = SKIP
 }
 
@@ -349,7 +349,7 @@ MATCH_BANDS: dict[str, int] = {
 NOTIFY_BANDS: list[str] = ['EXCELLENT', 'STRONG', 'GOOD', 'BORDERLINE']
 
 # Minimum final score (0-100) to save and notify
-MIN_SCORE_THRESHOLD: int = 40
+MIN_SCORE_THRESHOLD: int = 0
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ROLE CATEGORIES
