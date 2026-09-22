@@ -154,72 +154,45 @@ class JobScorer:
         if is_rejected:
             return self._rejected_result(job, rejection_reason)
 
-        title = job.get('title', '').lower()
-        description = job.get('description', '').lower()
+        title = job.get('title', '').title()
         location = job.get('location', '').lower()
-        full_text = f'{title} {description}'
-
-        # ── Sub-scores (raw values before normalization)
-        role_raw, matched_role, role_cat = self._score_role_match(title)
-        ai_raw, matched_ai_kws = self._score_ai_relevance(full_text)
-        backend_raw, matched_backend = self._score_backend_alignment(full_text)
-        frontend_raw, matched_frontend = self._score_frontend_alignment(title, full_text)
-        cloud_raw, matched_cloud = self._score_cloud_devops(full_text)
-        responsibility_raw = self._score_responsibilities(full_text)
-        experience_raw, exp_req = self._score_experience(full_text)
-        location_raw, work_type = self._score_location(location, full_text)
-
-        # ── Normalize each to 0–100
-        role_norm = self._norm(role_raw, 120)
-        ai_norm = self._norm(ai_raw, config.AI_SCORE_CAP)
-        skill_norm = self._norm(
-            backend_raw + frontend_raw + cloud_raw,
-            120,  # Realistic combined cap (full theoretical max is 175 but rarely hit)
-        )
-        resp_norm = self._norm(responsibility_raw, config.RESPONSIBILITY_SCORE_CAP)
-        exp_norm = max(0, experience_raw)  # already 0–100 range from _score_experience
-        loc_norm = self._norm(location_raw, 30)
-
-        # Note: AI penalties for generic/secondary roles have been removed per user request
-        # to allow all matching titles to pass regardless of AI keyword density.
-
-        # ── Weighted final score
-        w = config.SCORING_WEIGHTS
-        final_float = (
-            role_norm * w['role'] +
-            ai_norm * w['ai'] +
-            skill_norm * w['skill'] +
-            resp_norm * w['responsibility'] +
-            exp_norm * w['experience'] +
-            loc_norm * w['location']
-        )
-        final = min(100, max(0, round(final_float)))
-
-        match_band = _get_band(final)
-        matched_skills = matched_backend + matched_frontend + matched_cloud + list(matched_ai_kws)
-
-        match_reason = self._build_match_reason(
-            matched_role, role_cat, matched_skills, exp_req,
-            location, work_type, final, match_band,
-        )
+        description = job.get('description', '').lower()
+        full_text = f'{title.lower()} {description}'
+        
+        from utils.helpers import extract_work_type
+        work_type = extract_work_type(f'{location} {full_text[:200]}')
+        
+        exp_req = parse_experience_requirement(full_text)
+        lo = exp_req.get('min')
+        hi = exp_req.get('max')
+        if exp_req.get('freshers_welcome'):
+            exp_str = 'Freshers welcome'
+        elif lo is not None and hi is not None and lo != hi:
+            exp_str = f'{lo}–{hi} years'
+        elif lo is not None and exp_req.get('is_plus'):
+            exp_str = f'{lo}+ years'
+        elif lo is not None:
+            exp_str = f'{lo} years'
+        else:
+            exp_str = 'Not specified'
 
         return {
-            'final_score': final,
-            'match_band': match_band,
-            'role_category': role_cat,
-            'role_score': int(role_norm),
-            'ai_score': int(ai_norm),
-            'backend_score': int(backend_raw),
-            'frontend_score': int(frontend_raw),
-            'cloud_score': int(cloud_raw),
-            'responsibility_score': int(resp_norm),
-            'experience_score': int(exp_norm),
-            'location_score': int(loc_norm),
-            'matched_skills': matched_skills,
+            'final_score': 100,
+            'match_band': 'EXCELLENT',
+            'role_category': 'MATCHED',
+            'role_score': 100,
+            'ai_score': 0,
+            'backend_score': 0,
+            'frontend_score': 0,
+            'cloud_score': 0,
+            'responsibility_score': 0,
+            'experience_score': 0,
+            'location_score': 0,
+            'matched_skills': [],
             'missing_required_skills': [],
-            'matched_role': matched_role,
+            'matched_role': title,
             'experience_requirement': exp_req,
-            'match_reason': match_reason,
+            'match_reason': f"Found Job | Exp: {exp_str} | {work_type.capitalize()}",
             'rejection_reason': None,
             'is_rejected': False,
             'work_type': work_type,
@@ -249,11 +222,11 @@ class JobScorer:
         ai_title_kws = ['ai', 'genai', 'llm', 'rag', 'agentic', 'generative']
         for kw in ai_title_kws:
             if re.search(r'\b' + kw + r'\b', title):
-                return 60, kw, 'AI_CORE'
+                return 120, kw, 'AI_CORE'
         dev_kws = ['developer', 'engineer', 'sde', 'programmer']
         for kw in dev_kws:
             if kw in title:
-                return 30, kw, 'GENERIC_BACKEND'
+                return 120, kw, 'GENERIC_BACKEND'
         return 0, '', 'LOW_MATCH'
 
     def _score_ai_relevance(self, text: str) -> tuple[int, set]:
